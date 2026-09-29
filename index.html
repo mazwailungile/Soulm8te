@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LUNGA AI</title>
+<style>
+body{background:#000;color:white;font-family:Arial;padding:10px;margin:0}
+#chat{height:60vh;overflow-y:auto;background:#111;padding:10px;border-radius:10px}
+.msg{margin:6px 0;padding:8px 12px;border-radius:10px}
+.user{background:#0A84FF;margin-left:auto;text-align:right;max-width:80%}
+.bot{background:#222;max-width:90%}
+input{width:100%;padding:14px;background:#1a1a1a;border:1px solid #333;color:white;border-radius:10px;margin-top:8px}
+.btn{width:100%;padding:14px;border-radius:10px;border:none;font-weight:bold;margin-top:6px}
+</style>
+</head>
+<body>
+<h4 style="text-align:center">LUNGA AI - Direct Answers Only</h4>
+<div id="chat"><div class="msg bot">Ask me anything. I answer direct only.</div></div>
+<input id="inp" placeholder="Ask..." onkeypress="if(event.key==='Enter')go()">
+<button onclick="go()" style="width:100%;padding:12px;background:#00ff88;color:black;border:none;border-radius:8px;font-weight:bold;margin-top:6px">Ask</button>
+
+<button class="btn" style="background:#0070BA;color:white" onclick="window.open('https://paypal.me/ChristianhMosehla/100000','_blank')">Pay $100k PayPal</button>
+<button class="btn" style="background:#25D366;color:black" onclick="window.open('https://wa.me/27835043035','_blank')">WhatsApp 0835043035</button>
+
+<script>
+function add(t,w){let c=document.getElementById('chat');let d=document.createElement('div');d.className='msg '+w;d.innerText=t;c.appendChild(d);c.scrollTop=c.scrollHeight}
+
+function smartAnswer(q){
+ let l=q.toLowerCase().trim();
+ if(l==="hi"||l==="hello") return "Hello.";
+ if(l.includes("your name")) return "LUNGA AI.";
+ if(l.includes("who made you")) return "Christian Mosehla from Pieterskraal.";
+ if(l.includes("capital of sa")) return "Pretoria (administrative), Cape Town (legislative), Bloemfontein (judicial).";
+ if(l.includes("toyota")) return "Toyota fleet AI - offline, remembers drivers, saves fuel.";
+ if(l.includes("price")||l.includes("how much")) return "$100k fleet, R5k/month, R50k lifetime. PayPal.me/ChristianhMosehla";
+ if(l.includes("paypal")) return "paypal.me/ChristianhMosehla";
+ if(l.includes("whatsapp")) return "0835043035";
+ if(l.includes("where are you from")) return "Pieterskraal A, Mpumalanga.";
+ if(l.includes("what can you do")) return "Answer questions, remember, work offline.";
+ if(l.endsWith("?")) return q.replace("?","") + " - Yes, I can help with that.";
+ return q + " - Noted.";
+}
+
+function go(){
+ let i=document.getElementById('inp');
+ let q=i.value.trim();
+ if(!q)return;
+ add(q,'user');
+ i.value='';
+ let a=smartAnswer(q);
+ setTimeout(()=>add(a,'bot'),300);
+}
+</script>
+</body>
+</html>
