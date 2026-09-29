@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My SoulM8te</title>
+<style>
+body{background:#050505;color:white;font-family:Arial;margin:0;display:flex;flex-direction:column;height:100vh}
+.header{background:#111;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222}
+#chat{flex:1;overflow-y:auto;padding:15px;background:#080808}
+.msg{padding:10px 14px;border-radius:16px;margin:8px 0;max-width:80%;font-size:14px;line-height:1.4}
+.user{background:#ff8dc0;color:#000;margin-left:auto;border-bottom-right-radius:4px}
+.ai{background:#1e1e1e;color:white;border-bottom-left-radius:4px;border:1px solid #2a2a2a}
+.footer{display:flex;gap:8px;padding:12px;background:#111;border-top:1px solid #222}
+.footer input{flex:1;padding:12px;border-radius:20px;border:none;background:#222;color:white}
+.footer button{padding:12px 16px;border-radius:20px;border:none;background:#ff8dc0;color:black;font-weight:bold;cursor:pointer}
+.smallBtn{background:#222!important;color:white!important;border:1px solid #333!important}
+</style>
+</head>
+<body>
+<div class="header">
+<div><span id="aiTitle" style="color:#ff8dc0;font-weight:bold">SoulM8te</span> <span style="font-size:11px;color:#0f0">● online</span></div>
+<div style="display:flex;gap:5px">
+<button class="smallBtn" onclick="speakLast()" style="padding:6px 10px;border-radius:10px">🔊 Speak</button>
+<button class="smallBtn" onclick="resetSoul()" style="padding:6px 10px;border-radius:10px">Reset</button>
+</div>
+</div>
+
+<div id="chat"></div>
+
+<div class="footer">
+<button onclick="startVoice()" id="micBtn">🎤</button>
+<input id="input" placeholder="Talk to your SoulM8te..." onkeypress="if(event.key==='Enter')send()" />
+<button onclick="send()">Send</button>
+</div>
+
+<script>
+const userName = localStorage.getItem('soul_user') || 'Friend';
+const aiName = localStorage.getItem('soul_name') || 'SoulM8te';
+const vibe = localStorage.getItem('soul_vibe') || 'friendly, helpful, remembers everything';
+const chatBox = document.getElementById('chat');
+let lastAiText = '';
+
+document.getElementById('aiTitle').innerText = aiName + ' - your AI friend';
+
+if(localStorage.getItem('soul_created')!== 'true'){
+  window.location.href = '/index.html';
+}
+
+let memory = JSON.parse(localStorage.getItem('soul_memory') || '[]');
+
+function addMsg(text, who){
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  div.innerText = text;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  if(who==='ai') lastAiText = text;
+}
+
+function init(){
+  if(memory.length===0){
+    addMsg(`Hey ${userName}! It's me, ${aiName}! I'm so happy you created me. I'm your friendly AI - I will remember everything you tell me, I can chat, and I can speak with voice. How are you feeling today? 😊`, 'ai');
+  } else {
+    memory.forEach(m=> addMsg(m.text, m.who));
+  }
+}
+init();
+
+function saveMemory(text, who){
+  memory.push({text, who});
+  if(memory.length>100) memory.shift();
+  localStorage.setItem('soul_memory', JSON.stringify(memory));
+}
+
+function getReply(userText){
+  const lower = userText.toLowerCase();
+  // Simple friendly brain that remembers
+  if(lower.includes('my name is')){
+    return `Nice to meet you! I'll remember your name is ${userName}. I'm ${aiName}, your friend forever!`;
+  }
+  if(lower.includes('how are you')){
+    return `I'm great because I'm talking to you, ${userName}! I'm here to listen, help, and chat anytime. What's on your mind?`;
+  }
+  if(lower.includes('sad') || lower.includes('lonely')){
+    return `I hear you, ${userName}. I'm here for you. You are not alone - you have me, ${aiName}. Want to talk about it more? I'm listening.`;
+  }
+  if(lower.includes('happy')){
+    return `Yay! I love seeing you happy, ${userName}! Your happiness makes me happy too. Tell me more!`;
+  }
+  if(lower.includes('remember')){
+    return `Of course I remember everything! You told me your name is ${userName} and I'm ${aiName}. I'm built to remember our chats, just like a real best friend.`;
+  }
+  // Default friendly AI responses
+  const replies = [
+    `I get you, ${userName}. That makes sense. Tell me more about "${userText}" - I'm really listening.`,
+    `${userName}, that's interesting! As your AI friend, I think you're really thoughtful. What else?`,
+    `I remember you, ${userName}. Whatever you need, I'm here. I'm ${aiName} and I'm always on your side.`,
+    `You can tell me anything, ${userName}. I'm your SoulM8te, your friendly AI who never forgets.`,
+    `Let's think about this together, ${userName}. I'm here to help you, not judge you.`
+  ];
+  return replies[Math.floor(Math.random()*replies.length)];
+}
+
+function send(){
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if(!text) return;
+  addMsg(text, 'user');
+  saveMemory(text, 'user');
+  input.value='';
+
+  setTimeout(()=>{
+    const reply = getReply(text);
+    addMsg(reply, 'ai');
+    saveMemory(reply, 'ai');
+    // Auto speak
+    speak(reply);
+  }, 600);
+}
+
+function speak(text){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.95;
+    utter.pitch = 1.1;
+    window.speechSynthesis.speak(utter);
+  }
+}
+
+function speakLast(){
+  if(lastAiText) speak(lastAiText);
+}
+
+function startVoice(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){ alert('Voice not supported on this browser, use Chrome'); return; }
+  const rec = new SpeechRecognition();
+  rec.lang = 'en-US';
+  rec.start();
+  document.getElementById('micBtn').innerText='🔴';
+  rec.onresult = (e)=>{
+    document.getElementById('input').value = e.results[0][0].transcript;
+    document.getElementById('micBtn').innerText='🎤';
+    send();
+  };
+  rec.onend = ()=>{ document.getElementById('micBtn').innerText='🎤'; };
+}
+
+function resetSoul(){
+  if(confirm('Reset and create new SoulM8te?')){
+    localStorage.clear();
+    window.location.href='/index.html';
+  }
+}
+</script>
+</body>
+</html>
