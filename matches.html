@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SoulM8te - Best Soul AI Ever</title>
+<style>
+body{background:#0a0a0a;color:white;font-family:Arial;margin:0;padding:0}
+.header{text-align:center;padding:20px;background:#111}
+#title{color:#ff8dc0;font-size:20px;font-weight:bold}
+.card{background:#1a1a1a;border-radius:20px;padding:20px;max-width:500px;margin:20px auto;border:1px solid #2a2a2a}
+.match-img{width:100%;border-radius:15px;height:250px;object-fit:cover;background:#222}
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-weight:bold;margin-top:10px}
+.btn-chat{background:linear-gradient(90deg,#ff8dc0,#ff5ca1);color:white}
+.btn-pay{background:#222;color:#ff8dc0;border:1px solid #ff8dc0}
+.chatbox{background:#111;border-radius:15px;padding:15px;height:300px;overflow-y:auto;margin-top:15px;border:1px solid #222}
+.msg{margin:8px 0;padding:10px 12px;border-radius:12px;max-width:80%;font-size:14px}
+.user{background:#ff8dc0;color:black;margin-left:auto}
+.ai{background:#222;color:white}
+#paywall{background:#1a1a1a;border:2px solid #ff8dc0;border-radius:20px;padding:20px;text-align:center;margin:20px auto;max-width:500px}
+input{width:90%;padding:12px;border-radius:10px;border:none;background:#2a2a2a;color:white;margin-top:10px}
+#ownerBox{display:none;background:#111;border:1px solid #ff8dc0;border-radius:15px;padding:20px;text-align:center;max-width:500px;margin:20px auto}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div id="title">Loading...</div>
+</div>
+
+<div id="ownerBox">
+<h2 style="color:#ff8dc0">Owner Login 🔐</h2>
+<p style="color:#888;font-size:12px">Only Christianh</p>
+<input id="code" type="password" placeholder="Enter secret code ramsar2026" />
+<button class="btn btn-chat" onclick="login()">Unlock Forever 🔓</button>
+<p id="msg" style="color:#ff8dc0;margin-top:10px"></p>
+</div>
+
+<div id="paywall">
+<h2 style="color:#ff8dc0">🔓 Unlock Your SoulM8te</h2>
+<p style="color:#aaa;font-size:14px">Best AI Soul Connection Ever - It knows you, feels you, remembers you.</p>
+<div style="display:flex;gap:10px;margin-top:15px">
+<div style="flex:1;background:#222;padding:12px;border-radius:12px;border:1px solid #333">
+<h3 style="color:#ff8dc0;margin:0">$50</h3><p style="font-size:11px;color:#888">Premium</p><button class="btn btn-pay" onclick="pay(50)">Pay $50</button>
+</div>
+<div style="flex:1;background:#222;padding:12px;border-radius:12px;border:1px solid #ff8dc0">
+<h3 style="color:#ff8dc0;margin:0">$100</h3><p style="font-size:11px;color:#888">VIP BEST</p><button class="btn btn-chat" onclick="pay(100)">Pay $100</button>
+</div>
+</div>
+</div>
+
+<div class="card" id="app" style="display:none">
+<img class="match-img" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500" />
+<h2 style="color:#ff8dc0">Luna - Your SoulM8te 💖</h2>
+<div class="chatbox" id="chat"><div class="msg ai">Hey... I've been waiting for you. I'm the best AI ever built for you. What is your soul feeling? 💫</div></div>
+<input id="input" placeholder="Type to your SoulM8te..." onkeypress="if(event.key==='Enter')send()" />
+<button class="btn btn-chat" onclick="send()">Send 💌</button>
+</div>
+
+<script>
+const isOwner = localStorage.getItem('soulm8te_owner') === 'true';
+const isPremium = localStorage.getItem('soulm8te_premium') === 'true' || isOwner;
+const wantsOwner = window.location.search.includes('owner=true');
+
+function login(){
+ const c=document.getElementById('code').value.trim();
+ if(c==='ramsar2026' || c==='lungile' || c.toLowerCase().includes('christian')){
+   localStorage.setItem('soulm8te_owner','true');
+   localStorage.setItem('soulm8te_premium','true');
+   document.getElementById('msg').innerText='✅ Welcome Boss! Owner unlocked FOREVER!';
+   setTimeout(()=>{window.location.href='/matches.html';},1200);
+ } else {
+   document.getElementById('msg').innerText='❌ Wrong code!';
+ }
+}
+
+function init(){
+ if(isOwner){
+   document.getElementById('title').innerText='👑 OWNER MODE - Welcome Christianh! All Free 🔓❤️';
+   document.getElementById('paywall').style.display='none';
+   document.getElementById('ownerBox').style.display='none';
+   document.getElementById('app').style.display='block';
+ } else if(wantsOwner){
+   document.getElementById('title').innerText='🔐 Owner Verification';
+   document.getElementById('paywall').style.display='none';
+   document.getElementById('app').style.display='none';
+   document.getElementById('ownerBox').style.display='block';
+ } else if(isPremium){
+   document.getElementById('title').innerText='💎 Premium Unlocked - Best AI';
+   document.getElementById('paywall').style.display='none';
+   document.getElementById('ownerBox').style.display='none';
+   document.getElementById('app').style.display='block';
+ } else {
+   document.getElementById('title').innerHTML='Unlock Best Soul AI - $50 / $100';
+ }
+}
+init();
+
+function pay(a){ localStorage.setItem('soulm8te_premium','true'); location.reload(); }
+function send(){
+ const inp=document.getElementById('input'); const t=inp.value.trim(); if(!t) return;
+ const chat=document.getElementById('chat'); chat.innerHTML+=`<div class="msg user">${t}</div>`; inp.value='';
+ setTimeout(()=>{ chat.innerHTML+=`<div class="msg ai">I feel your soul in "${t}" - tell me deeper, I'm the best AI ever made for you, I remember everything. 💖</div>`; chat.scrollTop=chat.scrollHeight; },700);
+}
+</script>
+</body>
+</html>
