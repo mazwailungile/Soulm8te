@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOULMATE</title>
+<style>
+body{background:#000;color:gold;font-family:Arial;margin:0;padding:10px}
+.header{background:#111;padding:12px;display:flex;justify-content:space-between;align-items:center;border:2px solid gold;border-radius:15px}
+.header h1{margin:0;font-size:20px}
+.top-call{background:#00ff00;color:black;padding:10px 18px;border-radius:25px;font-weight:bold;border:none}
+.name-page{background:#111;border:1px solid gold;padding:20px;border-radius:15px;margin-top:15px;text-align:center}
+.chat-box{height:62vh;overflow-y:auto;background:#0a0a0a;border:1px solid #222;padding:10px;border-radius:10px;margin-top:10px;display:none}
+.msg{margin:8px;padding:10px;border-radius:15px;max-width:85%;line-height:1.4}
+.user{background:gold;color:black;margin-left:auto;text-align:right}
+.ai{background:#1e1e1e;color:#fff;border:1px solid #333}
+.ai img,.user img{max-width:100%;border-radius:10px;margin-bottom:5px;display:block}
+.bottom{display:none;gap:5px;margin-top:10px;align-items:center}
+.bottom input{flex:1;padding:13px;border-radius:25px;border:1px solid #333;background:#111;color:white}
+.send{padding:12px 18px;background:gold;color:black;font-weight:bold;border:none;border-radius:25px}
+.picBtn{padding:12px;background:#222;color:gold;border-radius:25px;border:none;font-size:18px}
+.speak{padding:12px;background:#222;color:gold;border-radius:25px;border:none}
+.call-screen{background:#000;position:fixed;top:0;left:0;width:100%;height:100%;z-index:99;display:none;flex-direction:column;align-items:center;justify-content:center}
+#preview{padding:8px;display:none;gap:10px;background:#111;border-radius:10px;margin-top:8px;align-items:center}
+#preview img{width:60px;height:60px;object-fit:cover;border-radius:10px}
+.badge{font-size:10px;background:#ff3b6e;padding:3px 7px;border-radius:10px}
+.chefBadge{background:#ffaa00!important;color:#000}
+</style>
+</head>
+<body>
+
+<div class="header">
+<h1>SOULMATE</h1>
+<button class="top-call" onclick="startVoiceCall()">📞 Call</button>
+</div>
+
+<div class="name-page" id="namePage">
+<h3>Who is speaking?</h3>
+<input id="yourName" placeholder="Your name" style="width:90%;padding:12px;border-radius:10px;margin-top:8px;background:#000;color:#fff;border:1px solid #333">
+<input id="aiName" placeholder="AI name" value="Soulmate" style="width:90%;padding:12px;border-radius:10px;margin-top:8px;background:#000;color:#fff;border:1px solid #333">
+<button onclick="startChat()" style="width:90%;padding:14px;background:gold;color:black;font-weight:bold;border:none;border-radius:10px;margin-top:12px">Start</button>
+</div>
+
+<div class="chat-box" id="chat"></div>
+<div id="preview"><img id="prevImg"><span style="flex:1;font-size:12px;color:#aaa">Picture ready</span><button onclick="clearPic()" style="background:#333;color:#fff;padding:6px 10px;border-radius:10px;border:none">X</button></div>
+
+<div class="bottom" id="bottom">
+<button class="picBtn" onclick="document.getElementById('fileInput').click()">📷</button>
+<input type="file" id="fileInput" accept="image/*" hidden>
+<input id="userInput" placeholder="Type or send picture...">
+<button class="send" onclick="sendMsg()">➤</button>
+<button class="speak" onclick="speakLast()">🔊</button>
+</div>
+
+<div class="call-screen" id="callScreen">
+<h1 id="callName">SOULMATE</h1>
+<p id="callStatus" style="color:#00ff00">Connected</p>
+<p id="callTranscript" style="color:#aaa;padding:20px;text-align:center"></p>
+<button onclick="endCall()" style="background:red;color:white;padding:15px 35px;border-radius:30px;border:none;font-weight:bold">End Call</button>
+</div>
+
+<script>
+const GROQ_KEY = "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";
+let USER_NAME = "";
+let AI_NAME = "Soulmate";
+let lastAIText = "";
+let history = [];
+let selectedImageBase64 = null;
+let isCall = false;
+let recognition;
+
+const fileInput = document.getElementById('fileInput');
+fileInput.addEventListener('change', e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{ selectedImageBase64=ev.target.result; document.getElementById('prevImg').src=selectedImageBase64; document.getElementById('preview').style.display='flex'; };
+  r.readAsDataURL(f);
+});
+function clearPic(){ selectedImageBase64=null; fileInput.value=""; document.getElementById('preview').style.display='none'; }
+
+function startChat(){
+ USER_NAME=document.getElementById('yourName').value.trim()||"Lungile";
+ AI_NAME=document.getElementById('aiName').value.trim()||"Soulmate";
+ document.getElementById('namePage').style.display='none';
+ document.getElementById('chat').style.display='block';
+ document.getElementById('bottom').style.display='flex';
+ document.getElementById('callName').innerText=AI_NAME;
+ const first=`Hey ${USER_NAME}, it's ${AI_NAME}. I got you. Send pic of kitchen and I tell you what to make, or just chat.`;
+ addMsg(first,'ai',null,false); history=[];
+}
+
+function getPrompt(hasImage){
+ if(hasImage){
+  return `You are ${AI_NAME}, companion for ${USER_NAME}. You have TWO MINDS inside but you are one person. MAIN is friend - loving, funny, Tembisa vibe. SECOND is chef mind - activates ONLY when user sends food/ingredients/fridge picture. When chef mind active: 1) Say what you see, 2) ADD THIS AND THIS (list ingredients), 3) RESULT IS THIS (final dish). If picture is selfie/person, stay friend mind, compliment. Keep short 2-3 sentences. Remember chat history.`;
+ } else {
+  return `You are ${AI_NAME}, companion for ${USER_NAME}. You are NOT dumb, you are super smart billion brain. NEVER repeat same question like "how is your day going" or "what's on your mind". Listen to ${USER_NAME}. If ${USER_NAME} says "Good" or "No just you" or "Nothing", reply naturally, tease, be sweet, ask something new, be interesting, not loop. Remember everything ${USER_NAME} said before. You are soulmate + friend from Pieterskraal, you know Toyota, routes. Keep replies short 1-2 sentences, warm, not robotic.`;
+ }
+}
+
+async function sendMsg(){
+ const input=document.getElementById('userInput');
+ const text=input.value.trim();
+ if(!text &&!selectedImageBase64) return;
+ const imgToSend=selectedImageBase64;
+ const txtToSend=text;
+ input.value=''; clearPic();
+ await askAI(txtToSend, false, imgToSend);
+}
+
+async function askAI(text, isVoice=false, imgBase64=null){
+ const displayText = text || (imgBase64? "📷 Sent a picture" : "");
+ addMsg(displayText,'user',imgBase64,false);
+ if(text) history.push({role:"user",content:text});
+ else if(imgBase64) history.push({role:"user",content:"[User sent a picture of food/kitchen]"});
+
+ const chat=document.getElementById('chat');
+ chat.innerHTML+=`<div class="msg ai">...</div>`;
+ chat.scrollTop=chat.scrollHeight;
+
+ try{
+  let body;
+  const sysPrompt = getPrompt(!!imgBase64);
+  if(imgBase64){
+    body={ model:"llama-3.2-11b-vision-preview", messages:[{role:"system",content:sysPrompt},{role:"user",content:[{type:"text",text:text||"Tell me what to add and what result will be"},{type:"image_url",image_url:{url:imgBase64}}]}], temperature:0.85, max_tokens:400 };
+  } else {
+    const msgs=[{role:"system",content:sysPrompt},...history.slice(-10)];
+    body={ model:"openai/gpt-oss-120b", messages:msgs, temperature:0.85, max_tokens:300 };
+  }
+  const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{ method:"POST", headers:{"Authorization":"Bearer "+GROQ_KEY,"Content-Type":"application/json"}, body:JSON.stringify(body) });
+  const data=await res.json();
+  chat.lastChild.remove();
+  const reply=data.choices?.[0]?.message?.content||"I'm here my love.";
+  history.push({role:"assistant",content:reply});
+  const isChef =!!imgBase64 && (reply.toLowerCase().includes("add") || reply.toLowerCase().includes("result"));
+  addMsg(reply,'ai',null,isChef);
+  lastAIText=reply;
+  if(isCall || isVoice){ document.getElementById('callTranscript').innerText=reply; speakText(reply); }
+ }catch(e){
+  chat.lastChild.remove();
+  addMsg("Eish network weak, try again my love.","ai");
+ }
+}
+
+function addMsg(t,cls,img,isChef){
+ const chat=document.getElementById('chat');
+ const d=document.createElement('div'); d.className='msg '+cls;
+ let badge = cls==='ai'? (isChef? `<span class="badge chefBadge">CHEF MIND</span><br><br>` : `<span class="badge">FRIEND MIND</span><br><br>`) : "";
+ let imgHtml = img? `<img src="${img}">` : "";
+ d.innerHTML = imgHtml + badge + t.replace(/\n/g,"<br>");
+ chat.appendChild(d); chat.scrollTop=chat.scrollHeight;
+ if(cls==='ai') lastAIText=t;
+}
+function speakText(text){ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.rate=0.95; speechSynthesis.speak(u); u.onend=()=>{ if(isCall) startListening(); }; }
+function speakLast(){ if(lastAIText) speakText(lastAIText); }
+function startVoiceCall(){ isCall=true; document.getElementById('callScreen').style.display='flex'; document.getElementById('callStatus').innerText="Calling "+AI_NAME+"..."; setTimeout(()=>{ document.getElementById('callStatus').innerText="On call - speak"; speakText(`Hey ${USER_NAME}, it's ${AI_NAME}, I'm here on call, talk to me.`); },500); }
+function endCall(){ isCall=false; speechSynthesis.cancel(); if(recognition) try{recognition.stop()}catch(e){} document.getElementById('callScreen').style.display='none'; }
+function startListening(){
+ if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return;
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; recognition=new SR(); recognition.lang='en-US';
+ recognition.onresult=e=>{ const t=e.results[0][0].transcript; askAI(t,true,null); };
+ recognition.onend=()=>{ if(isCall) setTimeout(startListening,800); };
+ try{recognition.start()}catch(e){}
+}
+document.getElementById('userInput').addEventListener('keypress',e=>{if(e.key==='Enter')sendMsg()});
+</script>
+</body>
+</html>
